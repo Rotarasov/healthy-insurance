@@ -5,10 +5,8 @@ from . import config
 # Build paths inside the project like this: BASE_DIR('subdir').
 BASE_DIR = environ.Path(__file__) - 3
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config.env.str('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config.env.bool('DEBUG', default=False)
 
 ALLOWED_HOSTS = config.env.list('ALLOWED_HOSTS')
