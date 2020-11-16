@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import ugettext_lazy as _
 from django.db import models
@@ -12,6 +14,7 @@ class User(AbstractUser):
         INSURANCE_COMPANY_MANAGER = 'ic_manager', _('Insurance company manager')
         EMPLOYER_COMPANY_MANAGER = 'ec_manager', _('Employer company manager')
 
+    id = models.UUIDField(_('id'), primary_key=True, default=uuid.uuid4, editable=False)
     username = None
     email = models.EmailField(_('email address'), max_length=255, unique=True)
     date_of_birth = models.DateField(_('date of birth'))
@@ -21,8 +24,7 @@ class User(AbstractUser):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name']
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'date_of_birth']
 
     def __str__(self):
         return self.email
-
