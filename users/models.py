@@ -14,7 +14,7 @@ class User(AbstractUser):
         INSURANCE_COMPANY_REPRESENTATIVE = 'ic_representative', _('Insurance company representative')
         EMPLOYER_COMPANY_REPRESENTATIVE = 'ec_representative', _('Employer company representative')
 
-    base_role = Roles.UNEMPLOYED
+    base_role = '__all__'
 
     id = models.UUIDField(_('id'), primary_key=True, default=uuid.uuid4, editable=False)
     username = None
@@ -33,6 +33,8 @@ class User(AbstractUser):
 
 
 class UnemployedUser(User):
+    base_role = User.Roles.UNEMPLOYED
+
     class Meta:
         proxy = True
 
