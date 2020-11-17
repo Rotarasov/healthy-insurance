@@ -11,14 +11,16 @@ class User(AbstractUser):
     class Roles(models.TextChoices):
         UNEMPLOYED = 'unemployed', _('Unemployed')
         EMPLOYED = 'employed', _('Employed')
-        INSURANCE_COMPANY_MANAGER = 'ic_manager', _('Insurance company manager')
-        EMPLOYER_COMPANY_MANAGER = 'ec_manager', _('Employer company manager')
+        INSURANCE_COMPANY_REPRESENTATIVE = 'ic_representative', _('Insurance company representative')
+        EMPLOYER_COMPANY_REPRESENTATIVE = 'ec_representative', _('Employer company representative')
+
+    base_role = Roles.UNEMPLOYED
 
     id = models.UUIDField(_('id'), primary_key=True, default=uuid.uuid4, editable=False)
     username = None
     email = models.EmailField(_('email address'), max_length=255, unique=True)
     date_of_birth = models.DateField(_('date of birth'))
-    role = models.CharField(_('role'), choices=Roles.choices, default=Roles.UNEMPLOYED, max_length=30)
+    role = models.CharField(_('role'), choices=Roles.choices, default=base_role, max_length=30)
     job = models.CharField(_('job'), max_length=50, blank=True)
 
     objects = UserManager()
@@ -28,3 +30,29 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class UnemployedUser(User):
+    class Meta:
+        proxy = True
+
+
+class EmployedUser(User):
+    base_role = User.Roles.EMPLOYED
+
+    class Meta:
+        proxy = True
+
+
+class InsuranceCompanyRepresentative(User):
+    base_role = User.Roles.INSURANCE_COMPANY_REPRESENTATIVE
+
+    class Meta:
+        proxy = True
+
+
+class EmployerCompanyRepresentative(User):
+    base_role = User.Roles.EMPLOYER_COMPANY_REPRESENTATIVE
+
+    class Meta:
+        proxy = True
