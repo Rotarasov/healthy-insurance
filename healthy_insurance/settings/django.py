@@ -27,7 +27,7 @@ INSTALLED_APPS = [
     'rest_framework',
 
     'users',
-
+    'insurance_companies',
     'employer_companies'
 ]
 
