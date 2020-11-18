@@ -25,6 +25,9 @@ class User(AbstractUser):
     employer_company = models.ForeignKey('employer_companies.EmployerCompany', on_delete=models.CASCADE,
                                          related_name='employees', related_query_name='employee',
                                          null=True)
+    insurance_company = models.ForeignKey('insurance_companies.InsuranceCompany', on_delete=models.CASCADE,
+                                          related_name='clients', related_query_name='client',
+                                          null=True)
 
     objects = UserManager()
 
