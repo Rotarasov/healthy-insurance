@@ -10,7 +10,7 @@ from .models import InsuranceCompany
 class InsuranceCompanyAPITestCase(APITestCase):
     def setUp(self) -> None:
         ins_comp = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
-        emp_company = EmployerCompany.objects.create(name='emp_c1', industry='ind1')
+        emp_company = EmployerCompany.objects.create(name='emp_c1', industry='ind1', insurance_company=ins_comp)
         EmployedUser.objects.create_user('emp1@example.com', 'empp1', 'Test', 'User1', '1980-01-01',
                                          insurance_company=ins_comp, employer_company=emp_company)
         EmployedUser.objects.create_user('emp2@example.com', 'empp2', 'Test', 'User2', '1980-01-01',
