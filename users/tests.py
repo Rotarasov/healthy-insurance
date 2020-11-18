@@ -11,6 +11,7 @@ from .models import (
     EmployerCompanyRepresentative
 )
 from employer_companies.models import EmployerCompany
+from insurance_companies.models import InsuranceCompany
 
 
 User = get_user_model()
@@ -61,6 +62,13 @@ class UserManagerTestCase(TestCase):
 
     def test_employer_company_for_user(self):
         emp_company = EmployerCompany.objects.create(name='emp_c1', industry='ind1')
+        emp_user = EmployedUser.objects.first()
+        emp_company.employees.add(emp_user)
+        self.assertEqual(emp_user.employer_company.name, 'emp_c1')
+        self.assertEqual(emp_user.employer_company.industry, 'ind1')
+
+    def test_insurance_company_for_user(self):
+        ins_company = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
         emp_user = EmployedUser.objects.first()
         emp_company.employees.add(emp_user)
         self.assertEqual(emp_user.employer_company.name, 'emp_c1')
