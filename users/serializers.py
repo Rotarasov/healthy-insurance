@@ -52,7 +52,7 @@ class EmployedUserCreateSerializer(UserCreateSerializer):
 class UnemployedUserSerializer(UserSerializer):
     class Meta:
         model = UnemployedUser
-        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['employer_company', 'job']]
+        fields = [f for f in UserSerializer.Meta.fields if f not in ['employer_company', 'job']]
         extra_kwargs = {'role': {'read_only': True}}
 
 
@@ -60,7 +60,7 @@ class UnemployedUserCreateSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
         model = UnemployedUser
         fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['employer_company', 'job']]
-        extra_kwargs = {'role': {'read_only': True}}
+        extra_kwargs = {**UserCreateSerializer.Meta.extra_kwargs, 'role': {'read_only': True}}
 
     def create(self, validated_data):
         return UnemployedUser.objects.create_user(**validated_data)
@@ -69,13 +69,15 @@ class UnemployedUserCreateSerializer(UserCreateSerializer):
 class EmployerCompanyRepresentativeSerializer(UserSerializer):
     class Meta:
         model = EmployerCompanyRepresentative
-        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['role', 'job', 'insurance_company']]
+        fields = [f for f in UserSerializer.Meta.fields if f not in ['job', 'insurance_company']]
+        extra_kwargs = {'role': {'read_only': True}}
 
 
 class EmployerCompanyRepresentativeCreateSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
         model = EmployerCompanyRepresentative
-        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['role', 'job', 'insurance_company']]
+        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['job', 'insurance_company']]
+        extra_kwargs = {**UserCreateSerializer.Meta.extra_kwargs, 'role': {'read_only': True}}
 
     def create(self, validated_data):
         return EmployerCompanyRepresentative.objects.create_user(**validated_data)
