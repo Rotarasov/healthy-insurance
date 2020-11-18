@@ -20,13 +20,13 @@ class User(AbstractUser):
     username = None
     email = models.EmailField(_('email address'), max_length=255, unique=True)
     date_of_birth = models.DateField(_('date of birth'))
-    role = models.CharField(_('role'), choices=Roles.choices, default=base_role, max_length=30)
+    role = models.CharField(_('role'), choices=Roles.choices, max_length=30)
     job = models.CharField(_('job'), max_length=50, blank=True)
     employer_company = models.ForeignKey('employer_companies.EmployerCompany', on_delete=models.CASCADE,
-                                         related_name='employees', related_query_name='employee',
+                                         related_name='employees', related_query_name='employees',
                                          null=True)
     insurance_company = models.ForeignKey('insurance_companies.InsuranceCompany', on_delete=models.CASCADE,
-                                          related_name='clients', related_query_name='client',
+                                          related_name='clients', related_query_name='clients',
                                           null=True)
 
     objects = UserManager()
