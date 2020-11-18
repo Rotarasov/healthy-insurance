@@ -10,6 +10,7 @@ from .models import (
     InsuranceCompanyRepresentative,
     EmployerCompanyRepresentative
 )
+from employer_companies.models import EmployerCompany
 
 
 User = get_user_model()
@@ -57,6 +58,13 @@ class UserManagerTestCase(TestCase):
     def test_user_delete(self):
         InsuranceCompanyRepresentative.objects.first().delete()
         self.assertEqual(InsuranceCompanyRepresentative.objects.count(), 0)
+
+    def test_employer_company_for_user(self):
+        emp_company = EmployerCompany.objects.create(name='emp_c1', industry='ind1')
+        emp_user = EmployedUser.objects.first()
+        emp_company.employees.add(emp_user)
+        self.assertEqual(emp_user.employer_company.name, 'emp_c1')
+        self.assertEqual(emp_user.employer_company.industry, 'ind1')
 
 
 class UserAPITestCase(APITestCase):

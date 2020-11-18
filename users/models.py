@@ -22,6 +22,9 @@ class User(AbstractUser):
     date_of_birth = models.DateField(_('date of birth'))
     role = models.CharField(_('role'), choices=Roles.choices, default=base_role, max_length=30)
     job = models.CharField(_('job'), max_length=50, blank=True)
+    employer_company = models.ForeignKey('employer_companies.EmployerCompany', on_delete=models.CASCADE,
+                                         related_name='employees', related_query_name='employee',
+                                         null=True)
 
     objects = UserManager()
 
