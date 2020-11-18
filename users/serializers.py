@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
+from users.models import EmployedUser
 
 User = get_user_model()
 
@@ -9,7 +10,8 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'first_name', 'last_name', 'date_of_birth', 'role', 'job']
+        fields = ['id', 'email', 'first_name', 'last_name', 'date_of_birth', 'role', 'job', 'insurance_company',
+                  'employer_company']
 
 
 class UserCreateSerializer(UserSerializer):
@@ -28,8 +30,13 @@ class UserCreateSerializer(UserSerializer):
 
         return attrs
 
+
+class EmployedUserCreateSerializer(UserCreateSerializer):
+    class Meta(UserCreateSerializer.Meta):
+        model = EmployedUser
+
     def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
+        return EmployedUser.objects.create(**validated_data)
 
 
 class UserUpdatePasswordSerializer(serializers.Serializer):
