@@ -48,7 +48,8 @@ class EmployedUser(User):
     base_role = User.Roles.EMPLOYED
 
     def save(self, *args, **kwargs):
-        self.insurance_company = self.employer_company.insurance_company
+        if not self.pk:
+            self.insurance_company = self.employer_company.insurance_company
         super().save(*args, **kwargs)
 
     class Meta:
