@@ -3,6 +3,7 @@ from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDe
 
 from .models import InsuranceCompany
 from .serializers import InsuranceCompanySerializer
+from users.models import EmployedUser
 
 
 User = get_user_model()
@@ -23,13 +24,15 @@ class InsuranceCompanyClientsListAPIView(ListAPIView):
 
     def get_queryset(self):
         insurance_company = self.get_object()
-        return User.objects.filter(insurance_company_id=insurance_company.id)
+        return insurance_company.clients
 
 
 class InsuranceCompanyPartnerCompaniesAPIVIew(ListAPIView):
     serializer_class = InsuranceCompanySerializer
 
-    # def get_queryset(self):
-    #     insurance_company = self.get_object()
-    #     return
+    def get_queryset(self):
+        insurance_company = self.get_object()
+        return EmployedUser.objects.filter(
+            insurance_company_id=insurance_company.id
+        ).select_related('employer_company')
 
