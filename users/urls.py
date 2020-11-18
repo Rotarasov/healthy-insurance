@@ -5,6 +5,12 @@ from . import views
 app_name = 'users'
 
 urlpatterns = [
-    path('<uuid:pk>/', views.UserReadUpdateDeleteAPIView.as_view(), name='detail'),
-    path('', views.UserCreateAPIVIew.as_view(), name='create')
+    path('unemployed/<uuid:pk>/', views.UnemployedUserReadUpdateDeleteAPIView.as_view(), name='unemployed-detail'),
+    path('unemployed/', views.UnemployedUserCreateAPIVIew.as_view(), name='unemployed-create'),
+    path('employer-company-representative/<uuid:pk>/',
+         views.EmployerCompanyRepresentativeReadUpdateDeleteAPIView.as_view(),
+         name='employer-company-representative-detail'),
+    path('employer-company-representative/',
+         views.EmployerCompanyRepresentativeCreateAPIView.as_view(),
+         name='employer-company-representative-create')
 ]

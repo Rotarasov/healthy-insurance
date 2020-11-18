@@ -1,18 +1,33 @@
 from django.contrib.auth import get_user_model
 from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView
 
-from .serializers import UserSerializer, UserCreateSerializer
-
+from .models import UnemployedUser, EmployerCompanyRepresentative
+from .serializers import (
+    UnemployedUserCreateSerializer,
+    UnemployedUserSerializer,
+    EmployerCompanyRepresentativeSerializer,
+    EmployerCompanyRepresentativeCreateSerializer
+)
 
 User = get_user_model()
 
 
-class UserCreateAPIVIew(CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserCreateSerializer
+class UnemployedUserCreateAPIVIew(CreateAPIView):
+    queryset = UnemployedUser.objects.all()
+    serializer_class = UnemployedUserCreateSerializer
 
 
-class UserReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+class UnemployedUserReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = UnemployedUser.objects.all()
+    serializer_class = UnemployedUserSerializer
+
+
+class EmployerCompanyRepresentativeCreateAPIView(CreateAPIView):
+    queryset = EmployerCompanyRepresentative.objects.all()
+    serializer_class = EmployerCompanyRepresentativeCreateSerializer
+
+
+class EmployerCompanyRepresentativeReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = EmployerCompanyRepresentative.objects.all()
+    serializer_class = EmployerCompanyRepresentativeSerializer
 
