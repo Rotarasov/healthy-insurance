@@ -11,7 +11,6 @@ class User(AbstractUser):
     class Roles(models.TextChoices):
         UNEMPLOYED = 'unemployed', _('Unemployed')
         EMPLOYED = 'employed', _('Employed')
-        INSURANCE_COMPANY_REPRESENTATIVE = 'ic_representative', _('Insurance company representative')
         EMPLOYER_COMPANY_REPRESENTATIVE = 'ec_representative', _('Employer company representative')
 
     base_role = '__all__'
@@ -48,12 +47,9 @@ class UnemployedUser(User):
 class EmployedUser(User):
     base_role = User.Roles.EMPLOYED
 
-    class Meta:
-        proxy = True
-
-
-class InsuranceCompanyRepresentative(User):
-    base_role = User.Roles.INSURANCE_COMPANY_REPRESENTATIVE
+    def save(self, *args, **kwargs):
+        self.insurance_company = self.employer_company.insurance_company
+        super().save(*args, **kwargs)
 
     class Meta:
         proxy = True

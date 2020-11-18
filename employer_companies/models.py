@@ -10,4 +10,6 @@ class EmployerCompany(models.Model):
     industry = models.CharField(_('industry'), max_length=30)
     insurance_coverage = models.FloatField(_('insurance coverage'), max_length=1.0, default=0.72)
     max_family_members = models.PositiveIntegerField(_('max family members'), default=4)
+    insurance_company = models.ForeignKey('insurance_companies.InsuranceCompany', on_delete=models.CASCADE,
+                                          related_name='partner_companies', related_query_name='partner_companies')
 
