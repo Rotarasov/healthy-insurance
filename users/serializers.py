@@ -30,13 +30,17 @@ class UserCreateSerializer(UserSerializer):
 
         return attrs
 
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
+
 
 class EmployedUserCreateSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
         model = EmployedUser
+        extra_kwargs = {**UserCreateSerializer.Meta.extra_kwargs, 'role': {'required': False}}
 
     def create(self, validated_data):
-        return EmployedUser.objects.create(**validated_data)
+        return EmployedUser.objects.create_user(**validated_data)
 
 
 class UserUpdatePasswordSerializer(serializers.Serializer):
