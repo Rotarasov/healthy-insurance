@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
-from users.models import EmployedUser
+from users.models import EmployedUser, UnemployedUser, EmployerCompanyRepresentative
 
 User = get_user_model()
 
@@ -34,40 +34,48 @@ class UserCreateSerializer(UserSerializer):
         return User.objects.create_user(**validated_data)
 
 
+class EmployedUserSerializer(UserSerializer):
+    class Meta(UserSerializer.Meta):
+        model = EmployedUser
+        fields = [f for f in UserSerializer.Meta.fields if f not in ['role', 'insurance_company']]
+
+
 class EmployedUserCreateSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
         model = EmployedUser
-        extra_kwargs = {**UserCreateSerializer.Meta.extra_kwargs, 'role': {'required': False}}
+        extra_kwargs = {'employer_company': {'required': True}, 'role': {'read_only': True}}
 
     def create(self, validated_data):
         return EmployedUser.objects.create_user(**validated_data)
 
 
-class UserUpdatePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(write_only=True, required=True)
-    new_password = serializers.CharField(write_only=True, required=True)
-    confirm_password = serializers.CharField(write_only=True, required=True)
+class UnemployedUserSerializer(UserSerializer):
+    class Meta:
+        model = UnemployedUser
+        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['employer_company', 'job']]
+        extra_kwargs = {'role': {'read_only': True}}
 
-    def validate_old_password(self, value):
-        user = self.context.get('request').user
 
-        if not user.check_password(value):
-            raise ValidationError(_('Wrong password'))
+class UnemployedUserCreateSerializer(UserCreateSerializer):
+    class Meta(UserCreateSerializer.Meta):
+        model = UnemployedUser
+        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['employer_company', 'job']]
+        extra_kwargs = {'role': {'read_only': True}}
 
-        return value
+    def create(self, validated_data):
+        return UnemployedUser.objects.create_user(**validated_data)
 
-    def validate(self, attrs):
-        old_password = attrs.get('old_password')
-        new_password = attrs.get('new_password')
 
-        if old_password == new_password:
-            raise ValidationError(_('Old and new passwords can not be equal'))
+class EmployerCompanyRepresentativeSerializer(UserSerializer):
+    class Meta:
+        model = EmployerCompanyRepresentative
+        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['role', 'job', 'insurance_company']]
 
-        return attrs
 
-    def save(self, **kwargs):
-        new_password = self.validated_data.get('new_password')
-        user = self.context.get('request').user
-        user.set_password(new_password)
-        user.save()
-        return user
+class EmployerCompanyRepresentativeCreateSerializer(UserCreateSerializer):
+    class Meta(UserCreateSerializer.Meta):
+        model = EmployerCompanyRepresentative
+        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['role', 'job', 'insurance_company']]
+
+    def create(self, validated_data):
+        return EmployerCompanyRepresentative.objects.create_user(**validated_data)
