@@ -69,10 +69,10 @@ class UserManagerTestCase(TestCase):
 
     def test_insurance_company_for_user(self):
         ins_company = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
-        emp_user = EmployedUser.objects.first()
-        emp_company.employees.add(emp_user)
-        self.assertEqual(emp_user.employer_company.name, 'emp_c1')
-        self.assertEqual(emp_user.employer_company.industry, 'ind1')
+        user = User.objects.first()
+        ins_company.clients.add(user)
+        self.assertEqual(user.insurance_company.name, 'ins_c1')
+        self.assertEqual(user.insurance_company.individual_price, 700)
 
 
 class UserAPITestCase(APITestCase):
