@@ -27,6 +27,7 @@ class User(AbstractUser):
                                          related_name='employees', null=True)
     insurance_company = models.ForeignKey('insurance_companies.InsuranceCompany', on_delete=models.CASCADE,
                                           related_name='clients', null=True)
+    insurance_price = models.PositiveIntegerField(_('insurance price'), blank=True)
 
     objects = UserManager()
 
@@ -36,11 +37,28 @@ class User(AbstractUser):
     def __str__(self):
         return self.email
 
+    def save(self, *args, **kwargs):
+        if not self.insurance_price:
+            self.insurance_price = self.insurance_company.individual_price
+        super().save(*args, **kwargs)
+
+
+class EmployeeMixin:
+    def clean_insurance_company_field(self, msg):
+        if self.insurance_company != self.employer_company.insurance_company:
+            raise ValidationError({'insurance_company': _(msg)})
+
+    def clean_employer_company_field(self, msg):
+        if not self.employer_company:
+            raise ValidationError({'employer_company': _(msg)})
+
 
 class UnemployedUser(User):
     base_role = User.Roles.UNEMPLOYED
 
     def clean(self):
+        super().clean()
+
         if self.job:
             raise ValidationError({'job': _('Unemployed user can not have a job')})
 
@@ -54,43 +72,37 @@ class UnemployedUser(User):
         proxy = True
 
 
-class EmployedUser(User):
+class EmployedUser(User, EmployeeMixin):
     base_role = User.Roles.EMPLOYED
 
     def clean(self):
+        super().clean()
+
         if not self.job:
             raise ValidationError({'job': _('Employed user must have a job')})
 
-        if not self.employer_company:
-            raise ValidationError({'employer_company': _('Employed user must have a employer')})
-
-        if self.insurance_company != self.employer_company.insurance_company:
-            raise ValidationError(
-                {'insurance_company': _('Employee must have insurance company the same as his employer company')}
-            )
+        self.clean_employer_company_field('Employed user must have a employer')
+        self.clean_insurance_company_field('Employed user must have insurance company the same as his employer company')
 
     class Meta:
         proxy = True
 
 
-class EmployerCompanyRepresentative(User):
+class EmployerCompanyRepresentative(User, EmployeeMixin):
     base_role = User.Roles.EMPLOYER_COMPANY_REPRESENTATIVE
+    base_job = 'Employer company representative'
 
     def clean(self):
-        if self.job:
-            raise ValidationError({'job': _('Employer company manager can not have a job')})
+        super().clean()
+        self.clean_employer_company_field('Employer company representative must have a employer company')
+        self.clean_insurance_company_field(
+            'Employer company representative must have insurance company the same as his employer company'
+        )
 
-        if not self.employer_company:
-            raise ValidationError(
-                {'employer_company': _('Employer company representative must have a employer company')}
-            )
-
-        if self.insurance_company != self.employer_company.insurance_company:
-            raise ValidationError(
-                {'insurance_company': _(
-                    'Employer company representative must have insurance company the same as his employer company'
-                )}
-            )
+    def save(self, *args, **kwargs):
+        if not self.job:
+            self.job = self.base_job
+        super().save(*args, **kwargs)
 
     class Meta:
         proxy = True
