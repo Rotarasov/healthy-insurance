@@ -7,8 +7,8 @@ from rest_framework.test import APITestCase
 from .models import (
     UnemployedUser,
     EmployedUser,
-    EmployerCompanyRepresentative
-)
+    EmployerCompanyRepresentative,
+    Measurement)
 from employer_companies.models import EmployerCompany
 from insurance_companies.models import InsuranceCompany
 
@@ -70,13 +70,17 @@ class UserAPITestCase(APITestCase):
     employer_company_representative_create_url = reverse('users:employer-company-representative-create')
 
     def setUp(self) -> None:
-        employer_company_representative = EmployerCompanyRepresentative.objects.create_user('ecr1@example.com', 'ecrp1', 'Test', 'User1',
-                                                                 '1980-01-01')
-        unemployed = UnemployedUser.objects.create_user('un1@example.com', 'unp1', 'Test', 'User1',
-                                                  '1980-01-01')
+        employer_company_representative = EmployerCompanyRepresentative.objects.create_user(
+            'ecr1@example.com', 'ecrp1', 'Test', 'User1', '1980-01-01')
+        unemployed = UnemployedUser.objects.create_user('un1@example.com', 'unp1', 'Test', 'User1', '1980-01-01')
+        Measurement.objects.create(user=unemployed, start='2020-10-01', end='2020-10-02',
+                                   sdnn=90, sdann=100, rmssd=20)
+        ins_comp = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
+        ins_comp.clients.add(unemployed)
         self.employer_company_representative_detail_url = reverse('users:employer-company-representative-detail',
                                                                   kwargs={'pk': employer_company_representative.id})
         self.unemployed_detail_url = reverse('users:unemployed-detail', kwargs={'pk': unemployed.id})
+        self.user_price_url = reverse('users:price', kwargs={'pk': unemployed.id})
 
     def test_unemployed_creation(self):
         data = {'email': 'un2@example.com', 'password': 'unp2', 'confirm_password': 'unp2',
@@ -104,3 +108,12 @@ class UserAPITestCase(APITestCase):
     def test_user_delete(self):
         response = self.client.delete(self.unemployed_detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_user_price_calculation(self):
+        user = UnemployedUser.objects.first()
+        ins_comp = InsuranceCompany.objects.first()
+        response = self.client.get(self.user_price_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['price'] < ins_comp.individual_price)
+
+
