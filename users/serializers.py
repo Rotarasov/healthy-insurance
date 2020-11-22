@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from users.models import EmployedUser, UnemployedUser, EmployerCompanyRepresentative
@@ -25,7 +26,7 @@ class UserCreateSerializer(UserSerializer):
         password = attrs.get('password', None)
         confirm_password = attrs.pop('confirm_password', None)
 
-        if not password or password != confirm_password:
+        if password != confirm_password:
             raise ValidationError(_('password and confirm_password must be equal'))
 
         return attrs
@@ -43,7 +44,7 @@ class EmployedUserSerializer(UserSerializer):
 class EmployedUserCreateSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
         model = EmployedUser
-        extra_kwargs = {'employer_company': {'required': True}, 'role': {'read_only': True}}
+        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['role', 'insurance_company']]
 
     def create(self, validated_data):
         return EmployedUser.objects.create_user(**validated_data)
@@ -52,14 +53,13 @@ class EmployedUserCreateSerializer(UserCreateSerializer):
 class UnemployedUserSerializer(UserSerializer):
     class Meta:
         model = UnemployedUser
-        fields = [f for f in UserSerializer.Meta.fields if f not in ['employer_company', 'job']]
-        extra_kwargs = {'role': {'read_only': True}}
+        fields = [f for f in UserSerializer.Meta.fields if f not in ['role', 'employer_company', 'job']]
 
 
 class UnemployedUserCreateSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
         model = UnemployedUser
-        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['employer_company', 'job']]
+        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['role', 'employer_company', 'job']]
         extra_kwargs = {**UserCreateSerializer.Meta.extra_kwargs, 'role': {'read_only': True}}
 
     def create(self, validated_data):
@@ -69,15 +69,13 @@ class UnemployedUserCreateSerializer(UserCreateSerializer):
 class EmployerCompanyRepresentativeSerializer(UserSerializer):
     class Meta:
         model = EmployerCompanyRepresentative
-        fields = [f for f in UserSerializer.Meta.fields if f not in ['job', 'insurance_company']]
-        extra_kwargs = {'role': {'read_only': True}}
+        fields = [f for f in UserSerializer.Meta.fields if f not in ['role', 'job', 'insurance_company']]
 
 
 class EmployerCompanyRepresentativeCreateSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
         model = EmployerCompanyRepresentative
-        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['job', 'insurance_company']]
-        extra_kwargs = {**UserCreateSerializer.Meta.extra_kwargs, 'role': {'read_only': True}}
+        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['role', 'job', 'insurance_company']]
 
     def create(self, validated_data):
         return EmployerCompanyRepresentative.objects.create_user(**validated_data)
