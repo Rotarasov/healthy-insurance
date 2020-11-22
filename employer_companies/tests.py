@@ -16,7 +16,7 @@ class EmployeeAPITestCase(APITestCase):
         ins_comp = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
         emp_comp = EmployerCompany.objects.create(name='emp_comp1', industry='ind1', insurance_company=ins_comp)
         emp_user = EmployedUser.objects.create_user('emp1@example.com', 'empp1', 'Test', 'User1', '1980-01-01',
-                                                    employer_company=emp_comp)
+                                                    employer_company=emp_comp, insurance_company=ins_comp)
         self.employee_list_url = reverse('employer_companies:employee-list', kwargs={'pk': emp_comp.id})
         self.employee_detail_url = reverse('employer_companies:employee-detail',
                                            kwargs={'employer_company_pk': emp_comp.id, 'employee_pk': emp_user.id})
@@ -60,9 +60,10 @@ class EmployerCompanyRepresentativeAPITestCase(APITestCase):
         self.ins_comp = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
         self.emp_comp = EmployerCompany.objects.create(name='emp_comp1', industry='ind1',
                                                        insurance_company=self.ins_comp)
-        self.emp_representative = EmployerCompanyRepresentative.objects.create_user('ecr1@example.com', 'ecrp1',
-                                                                                    'Test', 'User1', '1980-01-01')
-        self.emp_comp.employees.add(self.emp_representative)
+        self.emp_representative = EmployerCompanyRepresentative.objects.create_user(
+            'ecr1@example.com', 'ecrp1', 'Test', 'User1', '1980-01-01',
+            employer_company=self.emp_comp, insurance_company=self.ins_comp
+        )
         self.representative_list_url = reverse('employer_companies:representative-list',
                                                kwargs={'pk': self.emp_comp.id})
         self.representative_detail_url = reverse('employer_companies:representative-detail',
