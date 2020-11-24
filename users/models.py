@@ -27,7 +27,6 @@ class User(AbstractUser):
                                          related_name='employees', null=True)
     insurance_company = models.ForeignKey('insurance_companies.InsuranceCompany', on_delete=models.CASCADE,
                                           related_name='clients', null=True)
-    insurance_price = models.PositiveIntegerField(_('insurance price'), blank=True)
 
     objects = UserManager()
 
@@ -36,11 +35,6 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
-
-    def save(self, *args, **kwargs):
-        if not self.insurance_price:
-            self.insurance_price = self.insurance_company.individual_price
-        super().save(*args, **kwargs)
 
 
 class EmployeeMixin:
@@ -110,10 +104,16 @@ class EmployerCompanyRepresentative(User, EmployeeMixin):
 
 class Measurement(models.Model):
     id = models.UUIDField(_('id'), primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='measurements')
     sdnn = models.PositiveIntegerField(_('sdnn'))
     sdann = models.PositiveIntegerField(_('sdann'))
     rmssd = models.PositiveIntegerField(_('rmssd'))
     start = models.DateTimeField(_('start'))
     end = models.DateTimeField(_('end'))
+
+
+class InsurancePrice(models.Model):
+    id = models.UUIDField(_('id'), primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    price = models.PositiveIntegerField(_('insurance price'))
+    measurement = models.OneToOneField('Measurement', on_delete=models.CASCADE)
 
