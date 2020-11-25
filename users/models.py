@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
@@ -35,6 +36,12 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    @property
+    def age(self):
+        today = date.today()
+        birth = self.date_of_birth
+        return today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
 
 
 class EmployeeMixin:
@@ -110,10 +117,17 @@ class Measurement(models.Model):
     start = models.DateTimeField(_('start'))
     end = models.DateTimeField(_('end'))
 
+    class Meta:
+        ordering = ['-end', 'start']
+
 
 class InsurancePrice(models.Model):
     id = models.UUIDField(_('id'), primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='insurance_prices')
     price = models.PositiveIntegerField(_('insurance price'))
-    measurement = models.OneToOneField('Measurement', on_delete=models.CASCADE)
+    measurement = models.OneToOneField('Measurement', on_delete=models.CASCADE,  related_name='insurance_price')
+    created = models.DateTimeField(_('created'), auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created']
 
