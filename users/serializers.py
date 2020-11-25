@@ -1,9 +1,11 @@
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
-from users.models import EmployedUser, UnemployedUser, EmployerCompanyRepresentative
+from users.models import EmployedUser, UnemployedUser, EmployerCompanyRepresentative, Measurement
 
 User = get_user_model()
 
@@ -79,3 +81,18 @@ class EmployerCompanyRepresentativeCreateSerializer(UserCreateSerializer):
 
     def create(self, validated_data):
         return EmployerCompanyRepresentative.objects.create_user(**validated_data)
+
+
+class MeasurementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Measurement
+        fields = '__all__'
+
+    def validate(self, attrs):
+        start = attrs.get('start')
+        end = attrs.get('end')
+
+        if end - start < timedelta(days=1):
+            raise ValidationError(_('Measurement can not last less than 1 day'))
+
+        return attrs
