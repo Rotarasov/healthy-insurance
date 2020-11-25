@@ -7,8 +7,9 @@ from rest_framework.test import APITestCase
 from .models import (
     UnemployedUser,
     EmployedUser,
-    EmployerCompanyRepresentative,
-    Measurement)
+    Measurement,
+    InsurancePrice
+)
 from employer_companies.models import EmployerCompany
 from insurance_companies.models import InsuranceCompany
 
@@ -63,10 +64,8 @@ class UserAPITestCase(APITestCase):
         self.ins_comp = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
         self.unemployed = UnemployedUser.objects.create_user('un1@example.com', 'unp1', 'Test', 'User1', '1980-01-01',
                                                              insurance_company=self.ins_comp)
-        Measurement.objects.create(user=self.unemployed, start='2020-10-01', end='2020-10-02',
-                                   sdnn=90, sdann=100, rmssd=20)
         self.unemployed_detail_url = reverse('users:unemployed-detail', kwargs={'pk': self.unemployed.id})
-        self.user_price_url = reverse('users:price', kwargs={'pk': self.unemployed.id})
+        self.measurement_list_url = reverse('users:measurement-list', kwargs={'pk': self.unemployed.id})
 
     def test_unemployed_creation(self):
         data = {'email': 'un2@example.com', 'password': 'unp2', 'confirm_password': 'unp2', 'first_name': 'Test',
@@ -93,9 +92,22 @@ class UserAPITestCase(APITestCase):
         response = self.client.delete(self.unemployed_detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-    def test_user_price_calculation(self):
-        response = self.client.get(self.user_price_url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data['price'] < self.ins_comp.individual_price)
+    def test_user_measurements
+
+    def test_user_insurance_price(self):
+        data = {'start': '2020-10-01T09:00Z', 'end': '2020-10-02T10:00Z', 'sdnn': 60, 'sdann': 60, 'rmssd': 10}
+        response = self.client.post(self.measurement_list_url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(self.unemployed.insurance_prices.get(measurement_id=response.data['id']).price,
+                         self.unemployed.insurance_company.individual_price)
+
+        data['sdnn'] = 90
+        data['sdann'] = 100
+        data['rmssd'] = 20
+        response = self.client.post(self.measurement_list_url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        print(self.unemployed.insurance_prices.get(measurement_id=response.data['id']).price)
+        self.assertLess(self.unemployed.insurance_prices.get(measurement_id=response.data['id']).price,
+                        self.unemployed.insurance_company.individual_price)
 
 
