@@ -92,8 +92,6 @@ class UserAPITestCase(APITestCase):
         response = self.client.delete(self.unemployed_detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-    def test_user_measurements
-
     def test_user_insurance_price(self):
         data = {'start': '2020-10-01T09:00Z', 'end': '2020-10-02T10:00Z', 'sdnn': 60, 'sdann': 60, 'rmssd': 10}
         response = self.client.post(self.measurement_list_url, data=data)
