@@ -7,5 +7,7 @@ app_name = 'users'
 urlpatterns = [
     path('unemployed/<uuid:pk>/', views.UnemployedUserReadUpdateDeleteAPIView.as_view(), name='unemployed-detail'),
     path('unemployed/', views.UnemployedUserCreateAPIVIew.as_view(), name='unemployed-create'),
-    path('<uuid:pk>/price/', views.GetUserInsurancePrice.as_view(), name='price')
+    path('<uuid:pk>/measurements/', views.MeasurementListCreateAPIView.as_view(), name='measurement-list'),
+    path('<uuid:user_pk>/measurements/<uuid:measurement_pk>/',
+         views.MeasurementReadUpdateDeleteAPIView.as_view(), name='measurement-detail')
 ]

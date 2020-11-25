@@ -1,24 +1,34 @@
 from django.contrib.auth import get_user_model
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from .models import UnemployedUser
-from .serializers import UnemployedUserCreateSerializer, UnemployedUserSerializer
-from .services import calculate_user_insurance_price
+from .models import UnemployedUser, Measurement
+from .serializers import UnemployedUserCreateSerializer, UnemployedUserSerializer, MeasurementSerializer
+from .services import create_user_insurance_price
 
 
 User = get_user_model()
 
 
-class GetUserInsurancePrice(APIView):
-    @method_decorator(cache_page(60 * 60 * 2))
-    def get(self, request, pk):
-        user = get_object_or_404(User, pk=pk)
-        new_price = calculate_user_insurance_price(user)
-        return Response({'price': new_price})
+class MeasurementListCreateAPIView(CreateAPIView):
+    serializer_class = MeasurementSerializer
+
+    def get_queryset(self):
+        user = get_object_or_404(User, pk=self.kwargs['pk'])
+        return Measurement.objects.filter(insurance_price__user=user)
+
+    def perform_create(self, serializer):
+        user = get_object_or_404(User, pk=self.kwargs['pk'])
+        measurement = serializer.save()
+        create_user_insurance_price(user, measurement)
+
+
+class MeasurementReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
+    serializer_class = MeasurementSerializer
+    lookup_url_kwarg = 'measurement_pk'
+
+    def get_queryset(self):
+        user = get_object_or_404(User, pk=self.kwargs['user_pk'])
+        return Measurement.objects.filter(insurance_price__user=user)
 
 
 class UnemployedUserCreateAPIVIew(CreateAPIView):
