@@ -23,11 +23,6 @@ class User(AbstractUser):
     email = models.EmailField(_('email address'), max_length=255, unique=True)
     date_of_birth = models.DateField(_('date of birth'))
     role = models.CharField(_('role'), choices=Roles.choices, max_length=30)
-    job = models.CharField(_('job'), max_length=50, blank=True)
-    employer_company = models.ForeignKey('employer_companies.EmployerCompany', on_delete=models.CASCADE,
-                                         related_name='employees', null=True)
-    insurance_company = models.ForeignKey('insurance_companies.InsuranceCompany', on_delete=models.CASCADE,
-                                          related_name='clients', null=True)
 
     objects = UserManager()
 
@@ -44,66 +39,62 @@ class User(AbstractUser):
         return today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
 
 
-class EmployeeMixin:
-    def clean_insurance_company_field(self, msg):
-        if self.insurance_company != self.employer_company.insurance_company:
-            raise ValidationError({'insurance_company': _(msg)})
+class UnemployedUserMore(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True,
+                                related_name='unemployed_user_more',
+                                limit_choices_to={'role': User.Roles.UNEMPLOYED})
+    insurance_company = models.ForeignKey('insurance_companies.InsuranceCompany', on_delete=models.CASCADE,
+                                          related_name='clients')
+    family_member_employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                               related_name='family_members', null=True,
+                                               limit_choices_to={'role': User.Roles.EMPLOYED})
 
-    def clean_employer_company_field(self, msg):
-        if not self.employer_company:
-            raise ValidationError({'employer_company': _(msg)})
+
+class EmployedUserMore(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True,
+                                related_name='employed_user_more',
+                                limit_choices_to={'role': User.Roles.EMPLOYED})
+    job = models.CharField(_('job'), max_length=50, blank=True)
+    employer_company = models.ForeignKey('employer_companies.EmployerCompany', on_delete=models.CASCADE,
+                                         related_name='employees', null=True)
+
+
+class EmployerCompanyRepresentativeMore(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True,
+                                related_name='employer_company_representative_more',
+                                limit_choices_to={'role': User.Roles.EMPLOYER_COMPANY_REPRESENTATIVE})
+    employer_company = models.OneToOneField('employer_companies.EmployerCompany', on_delete=models.CASCADE,
+                                            related_name='employer_company_representative', null=True)
 
 
 class UnemployedUser(User):
     base_role = User.Roles.UNEMPLOYED
 
-    def clean(self):
-        super().clean()
-
-        if self.job:
-            raise ValidationError({'job': _('Unemployed user can not have a job')})
-
-        if self.employer_company:
-            raise ValidationError({'employer_company': _('Unemployed user can not have an employer')})
-
-        if not self.insurance_company:
-            raise ValidationError({'insurance_company': _('Unemployed user must have insurance company')})
+    @property
+    def more(self):
+        return self.unemployed_user_more
 
     class Meta:
         proxy = True
 
 
-class EmployedUser(User, EmployeeMixin):
+class EmployedUser(User):
     base_role = User.Roles.EMPLOYED
 
-    def clean(self):
-        super().clean()
-
-        if not self.job:
-            raise ValidationError({'job': _('Employed user must have a job')})
-
-        self.clean_employer_company_field('Employed user must have a employer')
-        self.clean_insurance_company_field('Employed user must have insurance company the same as his employer company')
+    @property
+    def more(self):
+        return self.employed_user_more
 
     class Meta:
         proxy = True
 
 
-class EmployerCompanyRepresentative(User, EmployeeMixin):
+class EmployerCompanyRepresentative(User):
     base_role = User.Roles.EMPLOYER_COMPANY_REPRESENTATIVE
-    base_job = 'Employer company representative'
 
-    def clean(self):
-        super().clean()
-        self.clean_employer_company_field('Employer company representative must have a employer company')
-        self.clean_insurance_company_field(
-            'Employer company representative must have insurance company the same as his employer company'
-        )
-
-    def save(self, *args, **kwargs):
-        if not self.job:
-            self.job = self.base_job
-        super().save(*args, **kwargs)
+    @property
+    def more(self):
+        return self.employer_company_representative_more
 
     class Meta:
         proxy = True
