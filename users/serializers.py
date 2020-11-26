@@ -5,7 +5,15 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
-from users.models import EmployedUser, UnemployedUser, EmployerCompanyRepresentative, Measurement
+from users.models import (
+    EmployedUser,
+    UnemployedUser,
+    EmployerCompanyRepresentative,
+    Measurement,
+    EmployedUserMore,
+    UnemployedUserMore,
+    EmployerCompanyRepresentativeMore
+)
 
 User = get_user_model()
 
@@ -13,8 +21,8 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'first_name', 'last_name', 'date_of_birth', 'role', 'job', 'insurance_company',
-                  'employer_company']
+        fields = ['id', 'email', 'first_name', 'last_name', 'date_of_birth', 'role']
+        extra_kwargs = {'role': {'read_only': True}}
 
 
 class UserCreateSerializer(UserSerializer):
@@ -22,7 +30,7 @@ class UserCreateSerializer(UserSerializer):
 
     class Meta(UserSerializer.Meta):
         fields = UserSerializer.Meta.fields + ['password', 'confirm_password']
-        extra_kwargs = {'password': {'write_only': True}}
+        extra_kwargs = {**UserSerializer.Meta.extra_kwargs, 'password': {'write_only': True}}
 
     def validate(self, attrs):
         password = attrs.get('password', None)
@@ -37,50 +45,112 @@ class UserCreateSerializer(UserSerializer):
         return User.objects.create_user(**validated_data)
 
 
+class EmployedUserMoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployedUserMore
+        fields = '__all__'
+        extra_kwargs = {'user': {'read_only': True}}
+
+
 class EmployedUserSerializer(UserSerializer):
+    employed_user_more = EmployedUserMoreSerializer(required=True)
+
     class Meta(UserSerializer.Meta):
         model = EmployedUser
-        fields = [f for f in UserSerializer.Meta.fields if f not in ['role', 'insurance_company']]
+        fields = UserSerializer.Meta.fields + ['employed_user_more']
+
+    def update(self, instance, validated_data):
+        employed_user_more_data = validated_data.pop('employed_user_more')
+        for attr, value in employed_user_more_data.items():
+            setattr(instance.more, attr, value)
+        instance.more.save()
+        return super().update(instance, validated_data)
 
 
-class EmployedUserCreateSerializer(UserCreateSerializer):
+class EmployedUserCreateSerializer(serializers.ModelSerializer):
+    employed_user_more = EmployedUserMoreSerializer(required=True)
+
     class Meta(UserCreateSerializer.Meta):
         model = EmployedUser
-        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['role', 'insurance_company']]
+        fields = UserCreateSerializer.Meta.fields + ['employed_user_more']
 
     def create(self, validated_data):
-        return EmployedUser.objects.create_user(**validated_data)
+        employed_user_more_data = validated_data.pop('employed_user_more')
+        employed_user = EmployedUser.objects.create_user(**validated_data)
+        EmployedUserMore.objects.create(user=employed_user, **employed_user_more_data)
+        return employed_user
+
+
+class UnemployedUserMoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UnemployedUserMore
+        exclude = ['user']
 
 
 class UnemployedUserSerializer(UserSerializer):
-    class Meta:
+    unemployed_user_more = UnemployedUserMoreSerializer(required=True)
+
+    class Meta(UserSerializer.Meta):
         model = UnemployedUser
-        fields = [f for f in UserSerializer.Meta.fields if f not in ['role', 'employer_company', 'job']]
+        fields = UserSerializer.Meta.fields + ['unemployed_user_more']
+
+    def update(self, instance, validated_data):
+        unemployed_user_more_data = validated_data.pop('unemployed_user_more')
+        for attr, value in unemployed_user_more_data.items():
+            setattr(instance.more, attr, value)
+        instance.more.save()
+        return super().update(instance, validated_data)
 
 
 class UnemployedUserCreateSerializer(UserCreateSerializer):
+    unemployed_user_more = UnemployedUserMoreSerializer(required=True)
+
     class Meta(UserCreateSerializer.Meta):
         model = UnemployedUser
-        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['role', 'employer_company', 'job']]
-        extra_kwargs = {**UserCreateSerializer.Meta.extra_kwargs, 'role': {'read_only': True}}
+        fields = UserCreateSerializer.Meta.fields + ['unemployed_user_more']
 
     def create(self, validated_data):
-        return UnemployedUser.objects.create_user(**validated_data)
+        unemployed_user_more_data = validated_data.pop('unemployed_user_more')
+        unemployed_user = UnemployedUser.objects.create_user(**validated_data)
+        UnemployedUserMore.objects.create(user=unemployed_user, **unemployed_user_more_data)
+        return unemployed_user
+
+
+class EmployerCompanyRepresentativeMoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployerCompanyRepresentativeMore
+        fields = '__all__'
+        extra_kwargs = {'user': {'read_only': True}}
 
 
 class EmployerCompanyRepresentativeSerializer(UserSerializer):
-    class Meta:
+    employer_company_representative_more = EmployerCompanyRepresentativeMoreSerializer(required=True)
+
+    class Meta(UserSerializer.Meta):
         model = EmployerCompanyRepresentative
-        fields = [f for f in UserSerializer.Meta.fields if f not in ['role', 'job', 'insurance_company']]
+        fields = UserSerializer.Meta.fields + ['employer_company_representative_more']
+
+    def update(self, instance, validated_data):
+        employer_company_representative_more_data = validated_data.pop('employer_company_representative_more_data')
+        for attr, value in employer_company_representative_more_data.items():
+            setattr(instance.more, attr, value)
+        instance.more.save()
+        return super().update(instance, validated_data)
 
 
 class EmployerCompanyRepresentativeCreateSerializer(UserCreateSerializer):
+    employer_company_representative_more = EmployerCompanyRepresentativeMoreSerializer(required=True)
+
     class Meta(UserCreateSerializer.Meta):
         model = EmployerCompanyRepresentative
-        fields = [f for f in UserCreateSerializer.Meta.fields if f not in ['role', 'job', 'insurance_company']]
+        fields = UserCreateSerializer.Meta.fields + ['employer_company_representative_more']
 
     def create(self, validated_data):
-        return EmployerCompanyRepresentative.objects.create_user(**validated_data)
+        employer_company_representative_more_data = validated_data.pop('employer_company_representative_more')
+        employer_company_representative = EmployerCompanyRepresentative.objects.create_user(**validated_data)
+        EmployerCompanyRepresentativeMore.objects.create(user=employer_company_representative,
+                                                         **employer_company_representative_more_data)
+        return employer_company_representative
 
 
 class MeasurementSerializer(serializers.ModelSerializer):
