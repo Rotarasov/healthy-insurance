@@ -4,7 +4,8 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from insurance_companies.models import InsuranceCompany
-from users.models import EmployedUser, EmployerCompanyRepresentative
+from users.models import EmployedUser, EmployerCompanyRepresentative, EmployedUserMore, \
+    EmployerCompanyRepresentativeMore
 from .models import EmployerCompany
 
 
@@ -13,13 +14,15 @@ User = get_user_model()
 
 class EmployeeAPITestCase(APITestCase):
     def setUp(self) -> None:
-        ins_comp = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
-        emp_comp = EmployerCompany.objects.create(name='emp_comp1', industry='ind1', insurance_company=ins_comp)
-        emp_user = EmployedUser.objects.create_user('emp1@example.com', 'empp1', 'Test', 'User1', '1980-01-01',
-                                                    employer_company=emp_comp, insurance_company=ins_comp)
-        self.employee_list_url = reverse('employer_companies:employee-list', kwargs={'pk': emp_comp.id})
+        self.ins_comp = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
+        self.emp_comp = EmployerCompany.objects.create(name='emp_comp1', industry='ind1',
+                                                       insurance_company=self.ins_comp)
+        self.emp_user = EmployedUser.objects.create_user('emp1@example.com', 'empp1', 'Test', 'User1', '1980-01-01')
+        EmployedUserMore.objects.create(user=self.emp_user, employer_company=self.emp_comp, job='job1')
+        self.employee_list_url = reverse('employer_companies:employee-list', kwargs={'pk': self.emp_comp.id})
         self.employee_detail_url = reverse('employer_companies:employee-detail',
-                                           kwargs={'employer_company_pk': emp_comp.id, 'employee_pk': emp_user.id})
+                                           kwargs={'employer_company_pk': self.emp_comp.id,
+                                                   'employee_pk': self.emp_user.id})
 
     def test_employee_list(self):
         response = self.client.get(self.employee_list_url)
@@ -27,9 +30,20 @@ class EmployeeAPITestCase(APITestCase):
         self.assertEqual(len(response.data), 1)
 
     def test_employee_create(self):
-        data = {'email': 'emp2@example.com', 'password': 'empp2', 'confirm_password': 'empp2',
-                'first_name': 'Test', 'last_name': 'User2', 'date_of_birth': '1980-01-01'}
-        response = self.client.post(self.employee_list_url, data=data)
+        data = {
+            'email': 'emp2@example.com',
+            'password': 'empp2',
+            'confirm_password': 'empp2',
+            'first_name': 'Test',
+            'last_name': 'User2',
+            'date_of_birth': '1980-01-01',
+            'employed_user_more':
+                {
+                    'employer_company': self.emp_comp.id,
+                    'job': 'job2'
+                }
+        }
+        response = self.client.post(self.employee_list_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['email'], 'emp2@example.com')
         self.assertEqual(response.data['first_name'], 'Test')
@@ -43,8 +57,18 @@ class EmployeeAPITestCase(APITestCase):
         self.assertEqual(response.data['last_name'], 'User1')
 
     def test_employee_update(self):
-        data = {'email': 'emp1@example.com', 'first_name': 'Test', 'last_name': 'User11', 'date_of_birth': '1980-01-01'}
-        response = self.client.put(self.employee_detail_url, data=data)
+        data = {
+            'email': 'emp1@example.com',
+            'first_name': 'Test',
+            'last_name': 'User11',
+            'date_of_birth': '1980-01-01',
+            'employed_user_more':
+                {
+                    'employer_company': self.emp_comp.id,
+                    'job': 'job11'
+                }
+        }
+        response = self.client.put(self.employee_detail_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['email'], 'emp1@example.com')
         self.assertEqual(response.data['first_name'], 'Test')
@@ -62,8 +86,8 @@ class EmployerCompanyRepresentativeAPITestCase(APITestCase):
                                                        insurance_company=self.ins_comp)
         self.emp_representative = EmployerCompanyRepresentative.objects.create_user(
             'ecr1@example.com', 'ecrp1', 'Test', 'User1', '1980-01-01',
-            employer_company=self.emp_comp, insurance_company=self.ins_comp
         )
+        EmployerCompanyRepresentativeMore.objects.create(user=self.emp_representative, employer_company=self.emp_comp)
         self.representative_list_url = reverse('employer_companies:representative-list',
                                                kwargs={'pk': self.emp_comp.id})
         self.representative_detail_url = reverse('employer_companies:representative-detail',
@@ -76,9 +100,20 @@ class EmployerCompanyRepresentativeAPITestCase(APITestCase):
         self.assertEqual(len(response.data), 1)
 
     def test_representative_create(self):
-        data = {'email': 'ecr2@example.com', 'password': 'ecrp2', 'confirm_password': 'ecrp2',
-                'first_name': 'Test', 'last_name': 'User2', 'date_of_birth': '1980-01-01'}
-        response = self.client.post(self.representative_list_url, data=data)
+        emp_comp2 = EmployerCompany.objects.create(name='emp_comp2', industry='ind2', insurance_company=self.ins_comp)
+        data = {
+            'email': 'ecr2@example.com',
+            'password': 'ecrp2',
+            'confirm_password': 'ecrp2',
+            'first_name': 'Test',
+            'last_name': 'User2',
+            'date_of_birth': '1980-01-01',
+            'employer_company_representative_more':
+                {
+                    'employer_company': emp_comp2.id
+                }
+        }
+        response = self.client.post(self.representative_list_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['email'], 'ecr2@example.com')
         self.assertEqual(response.data['first_name'], 'Test')
@@ -92,8 +127,17 @@ class EmployerCompanyRepresentativeAPITestCase(APITestCase):
         self.assertEqual(response.data['last_name'], 'User1')
 
     def test_representative_update(self):
-        data = {'email': 'ecr1@example.com', 'first_name': 'Test', 'last_name': 'User11', 'date_of_birth': '1980-01-01'}
-        response = self.client.put(self.representative_detail_url, data=data)
+        data = {
+            'email': 'ecr1@example.com',
+            'first_name': 'Test',
+            'last_name': 'User11',
+            'date_of_birth': '1980-01-01',
+            'employer_company_representative_more':
+                {
+                    'employer_company': self.emp_comp.id,
+                }
+        }
+        response = self.client.put(self.representative_detail_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['email'], 'ecr1@example.com')
         self.assertEqual(response.data['first_name'], 'Test')
