@@ -4,8 +4,7 @@ from typing import Dict, List, Union
 from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 
-from .models import Measurement, InsurancePrice
-
+from .models import Measurement, InsurancePrice, EmployedUser, UnemployedUser
 
 User = get_user_model()
 
@@ -54,13 +53,16 @@ def calculate_stability_discount(standard_price: int, previous_prices: Union[Que
     return STABILITY_DISCOUNT_COEFFICIENT
 
 
-def calculate_user_insurance_price(user: User, measurement:Measurement) -> int:
+def calculate_user_insurance_price(user: Union[EmployedUser, UnemployedUser], measurement:Measurement) -> int:
     round_function = round
     if user.age % 10 == 5:
         round_function = ceil
 
     user_age_category = round_function(user.age / 10) * 10
-    standard_insurance_price = user.insurance_company.individual_price
+    if isinstance(user, EmployedUser):
+        standard_insurance_price = user.more.employer_company.insurance_company.individual_price
+    else:
+        standard_insurance_price = user.more.insurance_company.individual_price
 
     normal_hrv_features = NORMAL_HRV_RANGE[user_age_category]
     health_discount = calculate_health_discount(measurement, normal_hrv_features)
