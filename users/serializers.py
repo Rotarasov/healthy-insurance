@@ -67,7 +67,7 @@ class EmployedUserSerializer(UserSerializer):
         return super().update(instance, validated_data)
 
 
-class EmployedUserCreateSerializer(serializers.ModelSerializer):
+class EmployedUserCreateSerializer(UserCreateSerializer):
     employed_user_more = EmployedUserMoreSerializer(required=True)
 
     class Meta(UserCreateSerializer.Meta):
@@ -131,7 +131,7 @@ class EmployerCompanyRepresentativeSerializer(UserSerializer):
         fields = UserSerializer.Meta.fields + ['employer_company_representative_more']
 
     def update(self, instance, validated_data):
-        employer_company_representative_more_data = validated_data.pop('employer_company_representative_more_data')
+        employer_company_representative_more_data = validated_data.pop('employer_company_representative_more', {})
         for attr, value in employer_company_representative_more_data.items():
             setattr(instance.more, attr, value)
         instance.more.save()
