@@ -1,9 +1,20 @@
 from rest_framework.generics import ListCreateAPIView, get_object_or_404, RetrieveUpdateDestroyAPIView
 
-from users.models import EmployedUser, EmployerCompanyRepresentative
+from users.models import EmployedUser, EmployerCompanyRepresentative, EmployerCompanyRepresentativeMore
 from users.serializers import EmployedUserCreateSerializer, EmployedUserSerializer
 from .models import EmployerCompany
 from users.serializers import EmployerCompanyRepresentativeCreateSerializer, EmployerCompanyRepresentativeSerializer
+from .serializers import EmployerCompanySerializer
+
+
+class EmployerCompanyListCreateAPIView(ListCreateAPIView):
+    queryset = EmployerCompany.objects.all()
+    serializer_class = EmployerCompanySerializer
+
+
+class EmployerCompanyReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = EmployerCompany.objects.all()
+    serializer_class = EmployerCompanySerializer
 
 
 class EmployedUserListCreateAPIVIew(ListCreateAPIView):
@@ -13,15 +24,8 @@ class EmployedUserListCreateAPIVIew(ListCreateAPIView):
         return EmployedUserSerializer
 
     def get_queryset(self):
-        employer_company_pk = self.kwargs['pk']
-        employer_company = get_object_or_404(EmployerCompany, pk=employer_company_pk)
-        return EmployedUser.objects.filter(employer_company=employer_company)
-
-    def perform_create(self, serializer):
-        employer_company_pk = self.kwargs['pk']
-        employer_company = get_object_or_404(EmployerCompany, pk=employer_company_pk)
-        insurance_company = employer_company.insurance_company
-        serializer.save(employer_company=employer_company, insurance_company=insurance_company)
+        employer_company = get_object_or_404(EmployerCompany, pk=self.kwargs['pk'])
+        return EmployedUser.objects.filter(employed_user_more__employer_company=employer_company)
 
 
 class EmployedUserReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
@@ -37,20 +41,20 @@ class EmployerCompanyRepresentativeListCreateAPIView(ListCreateAPIView):
         return EmployerCompanyRepresentativeSerializer
 
     def get_queryset(self):
-        employer_company_pk = self.kwargs['pk']
-        employer_company = get_object_or_404(EmployerCompany, pk=employer_company_pk)
-        return EmployerCompanyRepresentative.objects.filter(employer_company=employer_company)
-
-    def perform_create(self, serializer):
-        employer_company_pk = self.kwargs['pk']
-        employer_company = get_object_or_404(EmployerCompany, pk=employer_company_pk)
-        insurance_company = employer_company.insurance_company
-        serializer.save(employer_company=employer_company, insurance_company=insurance_company)
+        employer_company = get_object_or_404(EmployerCompany, pk=self.kwargs['pk'])
+        return EmployerCompanyRepresentative.objects.filter(
+            employer_company_representative_more__employer_company=employer_company
+        )
 
 
 class EmployerCompanyRepresentativeReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
-    queryset = EmployerCompanyRepresentative.objects.all()
     serializer_class = EmployerCompanyRepresentativeSerializer
     lookup_url_kwarg = 'representative_pk'
+
+    def get_queryset(self):
+        employer_company = get_object_or_404(EmployerCompany, pk=self.kwargs['employer_company_pk'])
+        return EmployerCompanyRepresentative.objects.filter(
+            employer_company_representative_more__employer_company=employer_company
+        )
 
 
