@@ -3,7 +3,8 @@ from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDe
 
 from employer_companies.models import EmployerCompany
 from employer_companies.serializers import EmployerCompanySerializer
-from users.serializers import UserSerializer
+from users.models import EmployedUser
+from users.serializers import UnemployedUserSerializer, EmployedUserSerializer
 from .models import InsuranceCompany
 from .serializers import InsuranceCompanySerializer
 
@@ -22,25 +23,17 @@ class InsuranceCompanyReadUpdateDeleteAPIVIew(RetrieveUpdateDestroyAPIView):
 
 
 class InsuranceCompanyClientsListAPIView(ListAPIView):
-    serializer_class = UserSerializer
-
-    def get_object(self):
-        return get_object_or_404(InsuranceCompany, pk=self.kwargs['pk'])
+    serializer_class = UnemployedUserSerializer
 
     def get_queryset(self):
-        insurance_company = self.get_object()
+        insurance_company = get_object_or_404(InsuranceCompany, pk=self.kwargs['pk'])
         return insurance_company.clients
 
 
 class InsuranceCompanyPartnerCompaniesAPIVIew(ListAPIView):
     serializer_class = EmployerCompanySerializer
 
-    def get_object(self):
-        return get_object_or_404(InsuranceCompany, pk=self.kwargs['pk'])
-
     def get_queryset(self):
-        insurance_company = self.get_object()
-        return EmployerCompany.objects.filter(
-            employees__insurance_company_id=insurance_company.id
-        ).distinct()
+        insurance_company = get_object_or_404(InsuranceCompany, pk=self.kwargs['pk'])
+        return insurance_company.partner_companies
 
