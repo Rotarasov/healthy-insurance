@@ -2,7 +2,6 @@ import uuid
 from datetime import date
 
 from django.contrib.auth.models import AbstractUser
-from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db import models
 
@@ -54,17 +53,17 @@ class EmployedUserMore(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True,
                                 related_name='employed_user_more',
                                 limit_choices_to={'role': User.Roles.EMPLOYED})
-    job = models.CharField(_('job'), max_length=50, blank=True)
+    job = models.CharField(_('job'), max_length=50)
     employer_company = models.ForeignKey('employer_companies.EmployerCompany', on_delete=models.CASCADE,
-                                         related_name='employees', null=True)
+                                         related_name='employees')
 
 
 class EmployerCompanyRepresentativeMore(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True,
                                 related_name='employer_company_representative_more',
                                 limit_choices_to={'role': User.Roles.EMPLOYER_COMPANY_REPRESENTATIVE})
-    employer_company = models.OneToOneField('employer_companies.EmployerCompany', on_delete=models.CASCADE,
-                                            related_name='employer_company_representative', null=True)
+    employer_company = models.ForeignKey('employer_companies.EmployerCompany', on_delete=models.CASCADE,
+                                         related_name='representative')
 
 
 class UnemployedUser(User):
