@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404
 
-from .models import UnemployedUser, Measurement
+from .models import UnemployedUser, Measurement, EmployedUser
 from .serializers import UnemployedUserCreateSerializer, UnemployedUserSerializer, MeasurementSerializer
 from .services import create_user_insurance_price
 
@@ -17,7 +17,13 @@ class MeasurementListCreateAPIView(CreateAPIView):
         return Measurement.objects.filter(insurance_price__user=user)
 
     def perform_create(self, serializer):
-        user = get_object_or_404(User, pk=self.kwargs['pk'])
+        base_user = get_object_or_404(User, pk=self.kwargs['pk'])
+
+        if base_user.role == User.Roles.EMPLOYED:
+            user = EmployedUser.objects.get(pk=base_user.id)
+        else:
+            user = UnemployedUser.objects.get(pk=base_user.id)
+
         measurement = serializer.save()
         create_user_insurance_price(user, measurement)
 
