@@ -117,6 +117,10 @@ class InsurancePrice(models.Model):
     price = models.PositiveIntegerField(_('insurance price'))
     measurement = models.OneToOneField('Measurement', on_delete=models.CASCADE,  related_name='insurance_price')
     created = models.DateTimeField(_('created'), auto_now_add=True)
+    employer_company_coverage_price = models.OneToOneField('employer_companies.EmployerCompanyCoveragePrice',
+                                                           on_delete=models.CASCADE,
+                                                           related_name='user_insurance_price',
+                                                           null=True)
 
     class Meta:
         ordering = ['-created']
