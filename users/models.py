@@ -44,9 +44,6 @@ class UnemployedUserMore(models.Model):
                                 limit_choices_to={'role': User.Roles.UNEMPLOYED})
     insurance_company = models.ForeignKey('insurance_companies.InsuranceCompany', on_delete=models.CASCADE,
                                           related_name='clients')
-    family_member_employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                                               related_name='family_members', null=True,
-                                               limit_choices_to={'role': User.Roles.EMPLOYED})
 
 
 class EmployedUserMore(models.Model):
