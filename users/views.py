@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from .models import UnemployedUser, Measurement, EmployedUser
 from .serializers import UnemployedUserCreateSerializer, UnemployedUserSerializer, MeasurementSerializer, \
     InsurancePriceSerializer
-from .services import create_user_insurance_price, get_latest_insurance_price, create_company_coverage_price
+from .services import create_user_insurance_price, get_latest_user_insurance_price, create_company_coverage_price
 
 
 User = get_user_model()
@@ -57,7 +57,7 @@ class UnemployedUserReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
 class GetLatestUserInsurancePrice(APIView):
     def get(self, request, *args, **kwargs):
         user = get_object_or_404(User, pk=self.kwargs['pk'])
-        insurance_price = get_latest_insurance_price(user)
+        insurance_price = get_latest_user_insurance_price(user)
         serializer = InsurancePriceSerializer(instance=insurance_price)
         return Response(serializer.data)
 
