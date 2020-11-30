@@ -1,10 +1,11 @@
-from rest_framework.generics import ListCreateAPIView, get_object_or_404, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListCreateAPIView, get_object_or_404, RetrieveUpdateDestroyAPIView, ListAPIView
 
 from users.models import EmployedUser, EmployerCompanyRepresentative, EmployerCompanyRepresentativeMore
 from users.serializers import EmployedUserCreateSerializer, EmployedUserSerializer
 from .models import EmployerCompany
 from users.serializers import EmployerCompanyRepresentativeCreateSerializer, EmployerCompanyRepresentativeSerializer
-from .serializers import EmployerCompanySerializer
+from .serializers import EmployerCompanySerializer, EmployerCompanyCoveragePriceSerializer
+from .services import get_employer_company_coverage_prices
 
 
 class EmployerCompanyListCreateAPIView(ListCreateAPIView):
@@ -58,3 +59,9 @@ class EmployerCompanyRepresentativeReadUpdateDeleteAPIView(RetrieveUpdateDestroy
         )
 
 
+class GetEmployerCompanyCoveragePrices(ListAPIView):
+    serializer_class = EmployerCompanyCoveragePriceSerializer
+
+    def get_queryset(self):
+        employer_company = get_object_or_404(EmployerCompany, pk=self.kwargs['pk'])
+        return get_employer_company_coverage_prices(employer_company)

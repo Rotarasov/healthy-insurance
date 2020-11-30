@@ -1,15 +1,25 @@
+from datetime import datetime, date
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from insurance_companies.models import InsuranceCompany
-from users.models import EmployedUser, EmployerCompanyRepresentative, EmployedUserMore, \
-    EmployerCompanyRepresentativeMore
+from users.models import (
+    EmployedUser,
+    EmployerCompanyRepresentative,
+    EmployedUserMore,
+    EmployerCompanyRepresentativeMore,
+    Measurement
+)
+from users.services import create_user_insurance_price, create_company_coverage_price
 from .models import EmployerCompany
 
-
 User = get_user_model()
+
+local_tz = timezone.get_default_timezone()
 
 
 class EmployeeAPITestCase(APITestCase):
@@ -146,4 +156,33 @@ class EmployerCompanyRepresentativeAPITestCase(APITestCase):
     def test_representative_delete(self):
         response = self.client.delete(self.representative_detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+
+class EmployerCompanyAPITestCase(APITestCase):
+    def setUp(self) -> None:
+        self.ins_comp = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
+        self.emp_comp = EmployerCompany.objects.create(name='emp_comp1', industry='ind1',
+                                                       insurance_company=self.ins_comp)
+        self.emp_user = EmployedUser.objects.create_user('emp1@example.com', 'empp1', 'Test', 'User1', date(1980, 1, 1))
+        EmployedUserMore.objects.create(user=self.emp_user, employer_company=self.emp_comp, job='job1')
+        self.measurement = Measurement.objects.create(start=local_tz.localize(datetime(2020, 10, 1, 9)),
+                                                      end=local_tz.localize(datetime(2020, 10, 2, 10)),
+                                                      sdnn=90, sdann=100, rmssd=20)
+        self.insurance_price = create_user_insurance_price(self.emp_user, self.measurement)
+        self.employer_company_coverage_price = create_company_coverage_price(self.insurance_price, self.emp_comp)
+
+        self.employer_company_coverage_price_list = reverse('employer_companies:price-list',
+                                                            kwargs={'pk': self.emp_comp.id})
+        self.insurance_price_url = reverse('users:insurance-price', kwargs={'pk': self.emp_user.id})
+
+    def test_employer_company_coverage_price_list(self):
+        response = self.client.get(self.employer_company_coverage_price_list)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['price'], 428)
+
+        response = self.client.get(self.insurance_price_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['price'], 167)
+
 
