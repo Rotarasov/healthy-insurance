@@ -8,8 +8,8 @@ from .models import (
     UnemployedUser,
     EmployedUser,
     EmployedUserMore,
-    UnemployedUserMore
-)
+    UnemployedUserMore,
+    Measurement, InsurancePrice)
 from employer_companies.models import EmployerCompany
 from insurance_companies.models import InsuranceCompany
 
@@ -66,6 +66,7 @@ class UserAPITestCase(APITestCase):
         UnemployedUserMore.objects.create(user=self.unemployed, insurance_company=self.ins_comp)
         self.unemployed_detail_url = reverse('users:unemployed-detail', kwargs={'pk': self.unemployed.id})
         self.measurement_list_url = reverse('users:measurement-list', kwargs={'pk': self.unemployed.id})
+        self.insurance_price_url = reverse('users:insurance-price', kwargs={'pk': self.unemployed.id})
 
     def test_unemployed_creation(self):
         data = {
@@ -125,12 +126,17 @@ class UserAPITestCase(APITestCase):
         response = self.client.delete(self.unemployed_detail_url, format='json')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-    def test_user_insurance_price(self):
+    def test_insurance_price_calculation(self):
         data = {'start': '2020-10-01T09:00Z', 'end': '2020-10-02T10:00Z', 'sdnn': 60, 'sdann': 60, 'rmssd': 10}
         response = self.client.post(self.measurement_list_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(self.unemployed.insurance_prices.get(measurement_id=response.data['id']).price,
                          self.unemployed.more.insurance_company.individual_price)
+
+        standard_price = self.unemployed.more.insurance_company.individual_price
+        response = self.client.get(self.insurance_price_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['price'], standard_price)  # 700
 
         data['sdnn'] = 90
         data['sdann'] = 100
@@ -140,4 +146,7 @@ class UserAPITestCase(APITestCase):
         self.assertLess(self.unemployed.insurance_prices.get(measurement_id=response.data['id']).price,
                         self.unemployed.more.insurance_company.individual_price)
 
-
+        standard_price = self.unemployed.more.insurance_company.individual_price
+        response = self.client.get(self.insurance_price_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertLess(response.data['price'], standard_price)  # 595
