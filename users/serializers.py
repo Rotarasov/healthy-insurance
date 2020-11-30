@@ -12,8 +12,8 @@ from users.models import (
     Measurement,
     EmployedUserMore,
     UnemployedUserMore,
-    EmployerCompanyRepresentativeMore
-)
+    EmployerCompanyRepresentativeMore,
+    InsurancePrice)
 
 User = get_user_model()
 
@@ -166,3 +166,9 @@ class MeasurementSerializer(serializers.ModelSerializer):
             raise ValidationError(_('Measurement can not last less than 1 day'))
 
         return attrs
+
+
+class InsurancePriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InsurancePrice
+        fields = '__all__'
