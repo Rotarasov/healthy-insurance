@@ -8,8 +8,8 @@ from .models import (
     UnemployedUser,
     EmployedUser,
     EmployedUserMore,
-    UnemployedUserMore,
-    Measurement, InsurancePrice)
+    UnemployedUserMore
+)
 from employer_companies.models import EmployerCompany
 from insurance_companies.models import InsuranceCompany
 
@@ -105,7 +105,6 @@ class UserAPITestCase(APITestCase):
                 }
         }
         response = self.client.put(self.unemployed_detail_url, data=data, format='json')
-        # print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['email'], 'un3@example.com')
         self.assertEqual(response.data['first_name'], 'Test3')
