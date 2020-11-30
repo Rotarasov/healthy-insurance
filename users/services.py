@@ -4,6 +4,7 @@ from typing import Dict, List, Union
 from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 
+from employer_companies.models import EmployerCompanyCoveragePrice, EmployerCompany
 from .models import Measurement, InsurancePrice, EmployedUser, UnemployedUser
 
 User = get_user_model()
@@ -74,9 +75,31 @@ def calculate_user_insurance_price(user: Union[EmployedUser, UnemployedUser], me
     return ceil((1 - total_discount) * standard_insurance_price)
 
 
-def create_user_insurance_price(user: User, measurement: Measurement) -> None:
+def create_user_insurance_price(user: User, measurement: Measurement) -> InsurancePrice:
     price = calculate_user_insurance_price(user, measurement)
-    InsurancePrice.objects.create(user=user, measurement=measurement, price=price)
+    return InsurancePrice.objects.create(user=user, measurement=measurement, price=price)
+
+
+def create_company_coverage_price(
+        user_insurance_price: InsurancePrice,
+        employer_company: EmployerCompany
+) -> EmployerCompanyCoveragePrice:
+
+    company_coverage = employer_company.insurance_coverage
+    full_price = user_insurance_price.price
+
+    user_insurance_price.price = ceil(full_price * (1 - company_coverage))
+    company_coverage_price = full_price * company_coverage
+
+    return EmployerCompanyCoveragePrice.objects.create(
+        price=company_coverage_price,
+        employer_company=employer_company,
+        user_insurance_price=user_insurance_price
+    )
+
+
+def get_latest_insurance_price(user: User) -> InsurancePrice:
+    return InsurancePrice.objects.filter(user=user).latest('created')
 
 
 
