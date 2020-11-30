@@ -91,14 +91,17 @@ def create_company_coverage_price(
     user_insurance_price.price = ceil(full_price * (1 - company_coverage))
     company_coverage_price = full_price * company_coverage
 
-    return EmployerCompanyCoveragePrice.objects.create(
+    employer_company_coverage_price = EmployerCompanyCoveragePrice.objects.create(
         price=company_coverage_price,
         employer_company=employer_company,
         user_insurance_price=user_insurance_price
     )
+    user_insurance_price.save()
+
+    return employer_company_coverage_price
 
 
-def get_latest_insurance_price(user: User) -> InsurancePrice:
+def get_latest_user_insurance_price(user: User) -> InsurancePrice:
     return InsurancePrice.objects.filter(user=user).latest('created')
 
 
