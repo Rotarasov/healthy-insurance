@@ -9,5 +9,6 @@ urlpatterns = [
     path('unemployed/', views.UnemployedUserCreateAPIVIew.as_view(), name='unemployed-create'),
     path('<uuid:pk>/measurements/', views.MeasurementListCreateAPIView.as_view(), name='measurement-list'),
     path('<uuid:user_pk>/measurements/<uuid:measurement_pk>/',
-         views.MeasurementReadUpdateDeleteAPIView.as_view(), name='measurement-detail')
+         views.MeasurementReadUpdateDeleteAPIView.as_view(), name='measurement-detail'),
+    path('<uuid:pk>/price/', views.GetLatestUserInsurancePrice.as_view(), name='insurance-price')
 ]

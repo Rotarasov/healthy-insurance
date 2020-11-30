@@ -1,15 +1,18 @@
 from django.contrib.auth import get_user_model
-from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404
+from rest_framework.generics import RetrieveUpdateDestroyAPIView, get_object_or_404, ListCreateAPIView
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import UnemployedUser, Measurement, EmployedUser
-from .serializers import UnemployedUserCreateSerializer, UnemployedUserSerializer, MeasurementSerializer
-from .services import create_user_insurance_price
+from .serializers import UnemployedUserCreateSerializer, UnemployedUserSerializer, MeasurementSerializer, \
+    InsurancePriceSerializer
+from .services import create_user_insurance_price, get_latest_insurance_price, create_company_coverage_price
 
 
 User = get_user_model()
 
 
-class MeasurementListCreateAPIView(CreateAPIView):
+class MeasurementListCreateAPIView(ListCreateAPIView):
     serializer_class = MeasurementSerializer
 
     def get_queryset(self):
@@ -25,7 +28,11 @@ class MeasurementListCreateAPIView(CreateAPIView):
             user = UnemployedUser.objects.get(pk=base_user.id)
 
         measurement = serializer.save()
-        create_user_insurance_price(user, measurement)
+        insurance_price = create_user_insurance_price(user, measurement)
+
+        if isinstance(user, EmployedUser):
+            employer_company = user.more.employer_company
+            create_company_coverage_price(insurance_price, employer_company)
 
 
 class MeasurementReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
@@ -37,7 +44,7 @@ class MeasurementReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
         return Measurement.objects.filter(insurance_price__user=user)
 
 
-class UnemployedUserCreateAPIVIew(CreateAPIView):
+class UnemployedUserCreateAPIVIew(ListCreateAPIView):
     queryset = UnemployedUser.objects.all()
     serializer_class = UnemployedUserCreateSerializer
 
@@ -45,4 +52,12 @@ class UnemployedUserCreateAPIVIew(CreateAPIView):
 class UnemployedUserReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
     queryset = UnemployedUser.objects.all()
     serializer_class = UnemployedUserSerializer
+
+
+class GetLatestUserInsurancePrice(APIView):
+    def get(self, request, *args, **kwargs):
+        user = get_object_or_404(User, pk=self.kwargs['pk'])
+        insurance_price = get_latest_insurance_price(user)
+        serializer = InsurancePriceSerializer(instance=insurance_price)
+        return Response(serializer.data)
 
