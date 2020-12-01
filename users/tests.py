@@ -24,8 +24,7 @@ class UserManagerTestCase(TestCase):
                                                        insurance_company=self.ins_comp)
         self.unemployed = UnemployedUser.objects.create_user('un1@example.com', 'unp1', 'Test', 'User1', '1980-01-01')
         self.employed = EmployedUser.objects.create_user('emp1@example.com', 'empp1', 'Test', 'User1', '1980-01-01')
-        UnemployedUserMore.objects.create(user=self.unemployed, insurance_company=self.ins_comp,
-                                          family_member_employee=self.employed)
+        UnemployedUserMore.objects.create(user=self.unemployed, insurance_company=self.ins_comp)
         EmployedUserMore.objects.create(user=self.employed, employer_company=self.emp_comp, job='programmer')
 
     def test_user_read(self):
@@ -59,6 +58,7 @@ class UserManagerTestCase(TestCase):
 
 class UserAPITestCase(APITestCase):
     unemployed_create_url = reverse('users:unemployed-create')
+    obtain_token_url = reverse('users:token-obtain-pair')
 
     def setUp(self) -> None:
         self.ins_comp = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
@@ -67,6 +67,11 @@ class UserAPITestCase(APITestCase):
         self.unemployed_detail_url = reverse('users:unemployed-detail', kwargs={'pk': self.unemployed.id})
         self.measurement_list_url = reverse('users:measurement-list', kwargs={'pk': self.unemployed.id})
         self.insurance_price_url = reverse('users:insurance-price', kwargs={'pk': self.unemployed.id})
+
+    def set_credentials(self):
+        response = self.client.post(self.obtain_token_url, data={'email': 'un1@example.com', 'password': 'unp1'})
+        access_token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
 
     def test_unemployed_creation(self):
         data = {
@@ -93,6 +98,7 @@ class UserAPITestCase(APITestCase):
         self.assertEqual(UnemployedUser.objects.count(), 2)
 
     def test_unemployed_update(self):
+        self.set_credentials()
         ins_comp2 = InsuranceCompany.objects.create(name='ins_c2', individual_price=700, family_price=20000)
         data = {
             'email': 'un3@example.com',
@@ -113,6 +119,7 @@ class UserAPITestCase(APITestCase):
         self.assertEqual(response.data['unemployed_user_more']['insurance_company'], ins_comp2.id)
 
     def test_user_read(self):
+        self.set_credentials()
         response = self.client.get(self.unemployed_detail_url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['email'], 'un1@example.com')
@@ -122,10 +129,12 @@ class UserAPITestCase(APITestCase):
         self.assertEqual(response.data['unemployed_user_more']['insurance_company'], self.ins_comp.id)
 
     def test_user_delete(self):
+        self.set_credentials()
         response = self.client.delete(self.unemployed_detail_url, format='json')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_insurance_price_calculation(self):
+        self.set_credentials()
         data = {'start': '2020-10-01T09:00Z', 'end': '2020-10-02T10:00Z', 'sdnn': 60, 'sdann': 60, 'rmssd': 10}
         response = self.client.post(self.measurement_list_url, data=data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)

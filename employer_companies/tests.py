@@ -23,6 +23,8 @@ local_tz = timezone.get_default_timezone()
 
 
 class EmployeeAPITestCase(APITestCase):
+    obtain_token_url = reverse('users:token-obtain-pair')
+
     def setUp(self) -> None:
         self.ins_comp = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
         self.emp_comp = EmployerCompany.objects.create(name='emp_comp1', industry='ind1',
@@ -34,7 +36,13 @@ class EmployeeAPITestCase(APITestCase):
                                            kwargs={'employer_company_pk': self.emp_comp.id,
                                                    'employee_pk': self.emp_user.id})
 
+    def set_credentials(self):
+        response = self.client.post(self.obtain_token_url, data={'email': 'emp1@example.com', 'password': 'empp1'})
+        access_token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+
     def test_employee_list(self):
+        self.set_credentials()
         response = self.client.get(self.employee_list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
@@ -60,6 +68,7 @@ class EmployeeAPITestCase(APITestCase):
         self.assertEqual(response.data['last_name'], 'User2')
 
     def test_employee_read(self):
+        self.set_credentials()
         response = self.client.get(self.employee_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['email'], 'emp1@example.com')
@@ -67,6 +76,7 @@ class EmployeeAPITestCase(APITestCase):
         self.assertEqual(response.data['last_name'], 'User1')
 
     def test_employee_update(self):
+        self.set_credentials()
         data = {
             'email': 'emp1@example.com',
             'first_name': 'Test',
@@ -85,11 +95,14 @@ class EmployeeAPITestCase(APITestCase):
         self.assertEqual(response.data['last_name'], 'User11')
 
     def test_employee_delete(self):
+        self.set_credentials()
         response = self.client.delete(self.employee_detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
 
 class EmployerCompanyRepresentativeAPITestCase(APITestCase):
+    obtain_token_url = reverse('users:token-obtain-pair')
+
     def setUp(self) -> None:
         self.ins_comp = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
         self.emp_comp = EmployerCompany.objects.create(name='emp_comp1', industry='ind1',
@@ -104,7 +117,13 @@ class EmployerCompanyRepresentativeAPITestCase(APITestCase):
                                                  kwargs={'employer_company_pk': self.emp_comp.id,
                                                          'representative_pk': self.emp_representative.id})
 
+    def set_credentials(self):
+        response = self.client.post(self.obtain_token_url, data={'email': 'ecr1@example.com', 'password': 'ecrp1'})
+        access_token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+
     def test_representative_list(self):
+        self.set_credentials()
         response = self.client.get(self.representative_list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
@@ -130,6 +149,7 @@ class EmployerCompanyRepresentativeAPITestCase(APITestCase):
         self.assertEqual(response.data['last_name'], 'User2')
 
     def test_representative_read(self):
+        self.set_credentials()
         response = self.client.get(self.representative_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['email'], 'ecr1@example.com')
@@ -137,6 +157,7 @@ class EmployerCompanyRepresentativeAPITestCase(APITestCase):
         self.assertEqual(response.data['last_name'], 'User1')
 
     def test_representative_update(self):
+        self.set_credentials()
         data = {
             'email': 'ecr1@example.com',
             'first_name': 'Test',
@@ -154,11 +175,14 @@ class EmployerCompanyRepresentativeAPITestCase(APITestCase):
         self.assertEqual(response.data['last_name'], 'User11')
 
     def test_representative_delete(self):
+        self.set_credentials()
         response = self.client.delete(self.representative_detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
 
 class EmployerCompanyAPITestCase(APITestCase):
+    obtain_token_url = reverse('users:token-obtain-pair')
+
     def setUp(self) -> None:
         self.ins_comp = InsuranceCompany.objects.create(name='ins_c1', individual_price=700, family_price=20000)
         self.emp_comp = EmployerCompany.objects.create(name='emp_comp1', industry='ind1',
@@ -175,7 +199,13 @@ class EmployerCompanyAPITestCase(APITestCase):
                                                             kwargs={'pk': self.emp_comp.id})
         self.insurance_price_url = reverse('users:insurance-price', kwargs={'pk': self.emp_user.id})
 
+    def set_credentials(self):
+        response = self.client.post(self.obtain_token_url, data={'email': 'emp1@example.com', 'password': 'empp1'})
+        access_token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+
     def test_employer_company_coverage_price_list(self):
+        self.set_credentials()
         response = self.client.get(self.employer_company_coverage_price_list)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
