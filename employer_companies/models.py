@@ -14,10 +14,21 @@ class EmployerCompany(models.Model):
                                           related_name='partner_companies', related_query_name='partner_companies')
 
 
+class EmployerCompanyPrice(models.Model):
+    id = models.UUIDField(_('id'), primary_key=True, default=uuid.uuid4, editable=False)
+    price = models.PositiveIntegerField(_('price'))
+    employer_company = models.ForeignKey('EmployerCompany', on_delete=models.CASCADE, related_name='prices')
+    created = models.DateTimeField(_('created'), auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created']
+
+
 class EmployerCompanyCoveragePrice(models.Model):
     id = models.UUIDField(_('id'), primary_key=True, default=uuid.uuid4, editable=False)
-    price = models.PositiveIntegerField(_('insurance price'))
-    employer_company = models.ForeignKey('EmployerCompany', on_delete=models.CASCADE, related_name='coverage_prices')
+    price = models.PositiveIntegerField(_('price'))
+    employer_company_price = models.ForeignKey('EmployerCompanyPrice', on_delete=models.CASCADE,
+                                               related_name='coverage_prices', null=True)
     created = models.DateTimeField(_('created'), auto_now_add=True)
 
     class Meta:
