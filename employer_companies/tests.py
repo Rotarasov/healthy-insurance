@@ -195,9 +195,10 @@ class EmployerCompanyAPITestCase(APITestCase):
         self.insurance_price = create_user_insurance_price(self.emp_user, self.measurement)
         self.employer_company_coverage_price = create_company_coverage_price(self.insurance_price, self.emp_comp)
 
-        self.employer_company_coverage_price_list = reverse('employer_companies:price-list',
+        self.employer_company_coverage_price_list = reverse('employer_companies:coverage-price-list',
                                                             kwargs={'pk': self.emp_comp.id})
         self.insurance_price_url = reverse('users:insurance-price', kwargs={'pk': self.emp_user.id})
+        self.employer_company_price_create_url = reverse('employer_companies:price-create', kwargs={'pk': self.emp_comp.id})
 
     def set_credentials(self):
         response = self.client.post(self.obtain_token_url, data={'email': 'emp1@example.com', 'password': 'empp1'})
@@ -213,6 +214,12 @@ class EmployerCompanyAPITestCase(APITestCase):
 
         response = self.client.get(self.insurance_price_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['price'], 167)
+
+    def test_employer_company_company_price(self):
+        self.set_credentials()
+        response = self.client.post(self.employer_company_price_create_url)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['price'], 167)
 
 
