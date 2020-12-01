@@ -93,7 +93,6 @@ def create_company_coverage_price(
 
     employer_company_coverage_price = EmployerCompanyCoveragePrice.objects.create(
         price=company_coverage_price,
-        employer_company=employer_company,
         user_insurance_price=user_insurance_price
     )
     user_insurance_price.save()
@@ -102,6 +101,8 @@ def create_company_coverage_price(
 
 
 def get_latest_user_insurance_price(user: User) -> InsurancePrice:
+    if InsurancePrice.objects.count() == 0:
+        return InsurancePrice.objects.none()
     return InsurancePrice.objects.filter(user=user).latest('created')
 
 
