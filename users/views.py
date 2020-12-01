@@ -1,15 +1,28 @@
 from django.contrib.auth import get_user_model
+from django.http import Http404
 from rest_framework.generics import RetrieveUpdateDestroyAPIView, get_object_or_404, ListCreateAPIView
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import UnemployedUser, Measurement, EmployedUser
-from .serializers import UnemployedUserCreateSerializer, UnemployedUserSerializer, MeasurementSerializer, \
-    InsurancePriceSerializer
+from .serializers import (
+    UnemployedUserCreateSerializer,
+    UnemployedUserSerializer,
+    MeasurementSerializer,
+    InsurancePriceSerializer,
+    CustomTokenObtainPairSerializer
+)
 from .services import create_user_insurance_price, get_latest_user_insurance_price, create_company_coverage_price
 
 
 User = get_user_model()
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    permissions = [AllowAny]
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 class MeasurementListCreateAPIView(ListCreateAPIView):
@@ -45,6 +58,7 @@ class MeasurementReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
 
 
 class UnemployedUserCreateAPIVIew(ListCreateAPIView):
+    permission_classes = [AllowAny]
     queryset = UnemployedUser.objects.all()
     serializer_class = UnemployedUserCreateSerializer
 
@@ -57,6 +71,8 @@ class UnemployedUserReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
 class GetLatestUserInsurancePrice(APIView):
     def get(self, request, *args, **kwargs):
         user = get_object_or_404(User, pk=self.kwargs['pk'])
+        if user.role == User.Roles.EMPLOYER_COMPANY_REPRESENTATIVE:
+            raise Http404
         insurance_price = get_latest_user_insurance_price(user)
         serializer = InsurancePriceSerializer(instance=insurance_price)
         return Response(serializer.data)
