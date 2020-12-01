@@ -1,6 +1,7 @@
 from rest_framework.generics import ListCreateAPIView, get_object_or_404, RetrieveUpdateDestroyAPIView, ListAPIView
+from rest_framework.permissions import AllowAny
 
-from users.models import EmployedUser, EmployerCompanyRepresentative, EmployerCompanyRepresentativeMore
+from users.models import EmployedUser, EmployerCompanyRepresentative
 from users.serializers import EmployedUserCreateSerializer, EmployedUserSerializer
 from .models import EmployerCompany
 from users.serializers import EmployerCompanyRepresentativeCreateSerializer, EmployerCompanyRepresentativeSerializer
@@ -19,6 +20,11 @@ class EmployerCompanyReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
 
 
 class EmployedUserListCreateAPIVIew(ListCreateAPIView):
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            self.permission_classes = [AllowAny]
+        return super().get_permissions()
+
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return EmployedUserCreateSerializer
@@ -36,6 +42,11 @@ class EmployedUserReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
 
 
 class EmployerCompanyRepresentativeListCreateAPIView(ListCreateAPIView):
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            self.permission_classes = [AllowAny]
+        return super().get_permissions()
+
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return EmployerCompanyRepresentativeCreateSerializer
@@ -59,7 +70,7 @@ class EmployerCompanyRepresentativeReadUpdateDeleteAPIView(RetrieveUpdateDestroy
         )
 
 
-class GetEmployerCompanyCoveragePrices(ListAPIView):
+class EmployerCompanyCoveragePriceListAPIView(ListAPIView):
     serializer_class = EmployerCompanyCoveragePriceSerializer
 
     def get_queryset(self):
